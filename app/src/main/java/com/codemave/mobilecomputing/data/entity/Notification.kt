@@ -11,6 +11,7 @@ import androidx.room.PrimaryKey
         Index("id", unique = true)
     ]
 )
+
 data class Notification(
     @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "id") val notificationId: Long = 0,
     @ColumnInfo(name = "title") val notificationTitle: String,
@@ -21,5 +22,6 @@ data class Notification(
     @ColumnInfo(name = "reminderTime") val reminderTime: Long,
     @ColumnInfo(name = "creationTime") val creationTime: Long,
     @ColumnInfo(name = "creatorId") val creatorId: String,
-    @ColumnInfo(name = "seen") val notificationSeen: Boolean
+    @ColumnInfo(name = "seen") val notificationSeen: Boolean,
+    @ColumnInfo(name = "notificationEnabled") val notificationEnabled: Boolean
 )

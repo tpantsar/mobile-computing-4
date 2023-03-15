@@ -88,7 +88,7 @@ private fun ReminderListItem(
         ConstraintLayout(modifier = Modifier.fillMaxWidth()) {
 
             val coroutineScope = rememberCoroutineScope()
-            val (divider, notificationTitle, notificationTime, notificationDate, editIcon, deleteIcon/*, checkIcon*/) = createRefs()
+            val (divider, notificationTitle, notificationTime, notificationDate, editIcon, deleteIcon) = createRefs()
             Divider(
                 Modifier.constrainAs(divider) {
                     top.linkTo(parent.top)

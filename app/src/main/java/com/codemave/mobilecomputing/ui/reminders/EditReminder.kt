@@ -8,20 +8,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.codemave.mobilecomputing.R
 import com.codemave.mobilecomputing.data.entity.Notification
 import kotlinx.coroutines.launch
 import java.util.*
@@ -74,6 +69,7 @@ fun EditReminder(
         val notificationTitle = rememberSaveable { mutableStateOf(notification.notificationTitle) }
         val notificationTime = rememberSaveable { mutableStateOf(notification.notificationTime) }
         val notificationDate = rememberSaveable { mutableStateOf(notification.notificationDate) }
+        val notificationEnabled = rememberSaveable { mutableStateOf(notification.notificationEnabled) }
 
         // Set correct time to be displayed
         time.value = notificationTime.value
@@ -98,32 +94,57 @@ fun EditReminder(
                 shape = RoundedCornerShape(corner = CornerSize(50.dp))
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
-            Button(
-                enabled = true,
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .height(50.dp),
-                onClick = {
-                    timePickerDialog.show()
-                },
-                shape = RoundedCornerShape(corner = CornerSize(50.dp))
-            ) {
-                Text(text = "Time: " + time.value)
+            // Switch button state
+            var switchOn by remember {
+                mutableStateOf(notificationEnabled.value)
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
-            Button(
-                enabled = true,
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .height(50.dp),
-                onClick = {
-                    datePickerDialog.show()
-                },
-                shape = RoundedCornerShape(corner = CornerSize(50.dp))
+            // Switch button to set notification ON / OFF
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "Date: " + date.value)
+                Switch(
+                    checked = switchOn,
+                    onCheckedChange = { switchOn_ ->
+                        switchOn = switchOn_
+                    }
+                )
+                Text(text = if (switchOn) "ON" else "OFF")
+            }
+
+            // Place time and date on the same row
+            Row(
+                modifier = Modifier.fillMaxWidth(0.9f),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                Button(
+                    enabled = switchOn,
+                    modifier = Modifier
+                        .height(50.dp)
+                        .weight(1f),
+                    shape = RoundedCornerShape(corner = CornerSize(50.dp)),
+                    onClick = {
+                        timePickerDialog.show()
+                    }
+                ) {
+                    Text(text = time.value)
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Button(
+                    enabled = switchOn,
+                    modifier = Modifier
+                        .height(50.dp)
+                        .weight(1f),
+                    shape = RoundedCornerShape(corner = CornerSize(50.dp)),
+                    onClick = {
+                        datePickerDialog.show()
+                    }
+                ) {
+                    Text(text = date.value)
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -135,27 +156,46 @@ fun EditReminder(
                 onClick = {
                     val timeValues = time.value.split(":")
                     val dateValues = date.value.split(".")
-                    val newyear = Integer.parseInt(dateValues[2])
-                    val newmonth = Integer.parseInt(dateValues[1])
-                    val newday = Integer.parseInt(dateValues[0])
-                    val newhour = Integer.parseInt(timeValues[0])
-                    val newminute = Integer.parseInt(timeValues[1])
-                    reminderCalendar.set(newyear, newmonth - 1, newday, newhour, newminute)
+                    val newYear = Integer.parseInt(dateValues[2])
+                    val newMonth = Integer.parseInt(dateValues[1])
+                    val newDay = Integer.parseInt(dateValues[0])
+                    val newHour = Integer.parseInt(timeValues[0])
+                    val newMinute = Integer.parseInt(timeValues[1])
+                    reminderCalendar.set(newYear, newMonth - 1, newDay, newHour, newMinute)
                     coroutineScope.launch {
-                        viewModel.updateReminder(
-                            com.codemave.mobilecomputing.data.entity.Notification(
-                                notificationId = notification.notificationId,
-                                notificationTitle = notificationTitle.value,
-                                notificationTime = time.value,
-                                notificationDate = date.value,
-                                reminderTime = reminderCalendar.timeInMillis,
-                                creationTime = notification.creationTime,
-                                creatorId = notification.creatorId,
-                                notificationSeen = notification.notificationSeen,
-                                locationX = notification.locationX,
-                                locationY = notification.locationY
+                        if (switchOn) {
+                            viewModel.updateReminder(
+                                Notification(
+                                    notificationId = notification.notificationId,
+                                    notificationTitle = notificationTitle.value,
+                                    locationX = notification.locationX,
+                                    locationY = notification.locationY,
+                                    notificationTime = time.value,
+                                    notificationDate = date.value,
+                                    reminderTime = reminderCalendar.timeInMillis,
+                                    creationTime = notification.creationTime,
+                                    creatorId = notification.creatorId,
+                                    notificationSeen = notification.notificationSeen,
+                                    notificationEnabled = true
+                                )
                             )
-                        )
+                        } else {
+                            viewModel.updateReminder(
+                                Notification(
+                                    notificationId = notification.notificationId,
+                                    notificationTitle = notificationTitle.value,
+                                    locationX = notification.locationX,
+                                    locationY = notification.locationY,
+                                    notificationTime = "",
+                                    notificationDate = "",
+                                    reminderTime = 0,
+                                    creationTime = notification.creationTime,
+                                    creatorId = notification.creatorId,
+                                    notificationSeen = notification.notificationSeen,
+                                    notificationEnabled = false
+                                )
+                            )
+                        }
                     }
                     navController.popBackStack()
                 },

@@ -111,14 +111,15 @@ private fun updateSeen(
         Notification(
             notificationId = reminder.notificationId,
             notificationTitle = reminder.notificationTitle,
+            locationX = reminder.locationX,
+            locationY = reminder.locationY,
             notificationTime = reminder.notificationTime,
             notificationDate = reminder.notificationDate,
             reminderTime = reminder.reminderTime,
             creationTime = reminder.creationTime,
             creatorId = reminder.creatorId,
             notificationSeen = true,
-            locationY = reminder.locationY,
-            locationX = reminder.locationX
+            notificationEnabled = true
         )
     )
 }
