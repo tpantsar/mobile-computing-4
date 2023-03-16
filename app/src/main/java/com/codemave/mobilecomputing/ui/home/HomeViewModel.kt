@@ -24,7 +24,10 @@ class HomeViewModel : ViewModel() {
         val categories = MutableStateFlow<List<Category>>(
             mutableListOf(
                 Category(1, "Reminders"),
-                Category(2, "Show all")
+                Category(2, "Show all"),
+                Category(3, "Study"),
+                Category(4, "Deadlines"),
+                Category(5, "Other")
             )
         )
 

@@ -1,9 +1,14 @@
 package com.codemave.mobilecomputing.ui.reminders
 
+import android.Manifest
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
+import android.content.pm.PackageManager
 import android.widget.DatePicker
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,9 +17,11 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.codemave.mobilecomputing.data.entity.Notification
@@ -39,6 +46,11 @@ fun EditReminder(
 
     val time = remember { mutableStateOf("") }
     val date = remember { mutableStateOf("") }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = {}
+    )
 
     val timePickerDialog = TimePickerDialog(
         timeContext,
@@ -94,41 +106,47 @@ fun EditReminder(
                 shape = RoundedCornerShape(corner = CornerSize(50.dp))
             )
 
-            // Switch button state
+            // Switch button state, enabled by default
             var switchOn by remember {
-                mutableStateOf(notificationEnabled.value)
+                mutableStateOf(true)
             }
 
-            // Switch button to set notification ON / OFF
-            Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Switch(
-                    checked = switchOn,
-                    onCheckedChange = { switchOn_ ->
-                        switchOn = switchOn_
-                    }
-                )
-                Text(text = if (switchOn) "ON" else "OFF")
-            }
-
-            // Place time and date on the same row
             Row(
                 modifier = Modifier.fillMaxWidth(0.9f),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                WeeklyReminder()
+
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Switch button to set notification ON / OFF
+                    Switch(
+                        checked = switchOn,
+                        onCheckedChange = { switchOn_ ->
+                            switchOn = switchOn_
+                        }
+                    )
+                    Text(text = if (switchOn) "Notification ON" else "Notification OFF")
+                }
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Place date and time on the same row
+            Row(
+                modifier = Modifier.fillMaxWidth(0.9f),
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Button(
                     enabled = switchOn,
                     modifier = Modifier
                         .height(50.dp)
-                        .weight(1f),
+                        .weight(10f),
                     shape = RoundedCornerShape(corner = CornerSize(50.dp)),
-                    onClick = {
-                        timePickerDialog.show()
-                    }
+                    onClick = { datePickerDialog.show() }
                 ) {
-                    Text(text = time.value)
+                    Text(text = date.value)
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -137,14 +155,32 @@ fun EditReminder(
                     enabled = switchOn,
                     modifier = Modifier
                         .height(50.dp)
-                        .weight(1f),
+                        .weight(10f),
                     shape = RoundedCornerShape(corner = CornerSize(50.dp)),
-                    onClick = {
-                        datePickerDialog.show()
-                    }
+                    onClick = { timePickerDialog.show() }
                 ) {
-                    Text(text = date.value)
+                    Text(text = time.value)
                 }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+            Button(
+                enabled = true,
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .height(50.dp),
+                shape = RoundedCornerShape(corner = CornerSize(50.dp)),
+                onClick = {
+                    requestPermission(
+                        context = context,
+                        permission = Manifest.permission.ACCESS_FINE_LOCATION,
+                        requestPermission = { launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }
+                    ).apply {
+                        navController.navigate("map")
+                    }
+                }
+            ) {
+                Text(text = "Reminder location")
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -208,6 +244,35 @@ fun EditReminder(
 }
 
 @Composable
+private fun WeeklyReminder() {
+    val contextForToast = LocalContext.current.applicationContext
+
+    var recurringReminder by remember {
+        mutableStateOf(false)
+    }
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(
+            modifier = Modifier.scale(scale = 1.3f),
+            checked = recurringReminder,
+            onCheckedChange = { checked_ ->
+                recurringReminder = checked_
+                if (recurringReminder) {
+                    Toast.makeText(contextForToast, "Recurring reminder ON", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(contextForToast, "Recurring reminder OFF", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
+
+        Text(
+            modifier = Modifier.padding(start = 2.dp),
+            text = "Repeat weekly"
+        )
+    }
+}
+
+@Composable
 private fun TopBar(
     backgroundColor: Color
 ) {
@@ -223,4 +288,18 @@ private fun TopBar(
         },
         backgroundColor = backgroundColor
     )
+}
+
+private fun requestPermission(
+    context: Context,
+    permission: String,
+    requestPermission: () -> Unit
+) {
+    if (ContextCompat.checkSelfPermission(
+            context,
+            permission
+        ) != PackageManager.PERMISSION_GRANTED
+    ) {
+        requestPermission()
+    }
 }

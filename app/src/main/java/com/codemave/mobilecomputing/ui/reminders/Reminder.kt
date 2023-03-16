@@ -60,7 +60,7 @@ private fun ReminderList(
         items(list) { item ->
             ReminderListItem(
                 notification = item,
-                // onClick = {/* TODO */},
+                // onClick = {TODO},
                 modifier = Modifier.fillParentMaxWidth(),
                 context,
                 navController,
