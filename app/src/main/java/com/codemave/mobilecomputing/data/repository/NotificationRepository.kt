@@ -29,7 +29,7 @@ class NotificationRepository(
         return notificationDao.update(notification)
     }
 
-    fun update2(notification: Notification) {
+    fun updateSeenState(notification: Notification) {
         return notificationDao.update2(notification)
     }
 }

@@ -13,10 +13,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -28,10 +24,12 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.codemave.mobilecomputing.R
 import com.codemave.mobilecomputing.ui.login.SharedPreferences
 import kotlinx.coroutines.launch
 import java.util.*
+
+// Recurring reminder state, false by default
+var recurringReminderEnabled = false
 
 @Composable
 fun AddReminder(
@@ -116,7 +114,7 @@ fun AddReminder(
                 modifier = Modifier.fillMaxWidth(0.9f),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                WeeklyReminder()
+                DailyReminder()
 
                 Column(
                     verticalArrangement = Arrangement.Center,
@@ -218,6 +216,7 @@ fun AddReminder(
                                     creatorId = SharedPreferences(context).username,
                                     notificationSeen = false,
                                     notificationEnabled = true,
+                                    recurringEnabled = recurringReminderEnabled
                                 )
                             )
                         } else {
@@ -232,7 +231,8 @@ fun AddReminder(
                                     creationTime = Date().time,
                                     creatorId = SharedPreferences(context).username,
                                     notificationSeen = false,
-                                    notificationEnabled = false
+                                    notificationEnabled = false,
+                                    recurringEnabled = recurringReminderEnabled
                                 )
                             )
                         }
@@ -247,7 +247,7 @@ fun AddReminder(
 }
 
 @Composable
-private fun WeeklyReminder() {
+private fun DailyReminder() {
     val contextForToast = LocalContext.current.applicationContext
 
     var recurringReminder by remember {
@@ -261,16 +261,18 @@ private fun WeeklyReminder() {
             onCheckedChange = { checked_ ->
                 recurringReminder = checked_
                 if (recurringReminder) {
-                    Toast.makeText(contextForToast, "Recurring reminder ON", Toast.LENGTH_SHORT).show()
+                    recurringReminderEnabled = true
+                    Toast.makeText(contextForToast, "Daily reminder ON", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(contextForToast, "Recurring reminder OFF", Toast.LENGTH_SHORT).show()
+                    recurringReminderEnabled = false
+                    Toast.makeText(contextForToast, "Daily reminder OFF", Toast.LENGTH_SHORT).show()
                 }
             }
         )
 
         Text(
             modifier = Modifier.padding(start = 2.dp),
-            text = "Repeat weekly"
+            text = "Repeat daily"
         )
     }
 }

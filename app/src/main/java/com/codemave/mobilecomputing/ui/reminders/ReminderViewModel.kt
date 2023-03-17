@@ -16,6 +16,7 @@ import com.codemave.mobilecomputing.data.repository.NotificationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 class ReminderViewModel(
@@ -27,10 +28,22 @@ class ReminderViewModel(
         get() = _state
 
     suspend fun saveReminder(notification: Notification): Long {
-        val result = notificationRepository.addNotification(notification)
-        println("ID: $result")
-        setOneTimeNotification(notification, result)
-        return result
+
+        // Put recurring reminder back to default state
+        recurringReminderEnabled = false
+
+        // If a notification is recurring, eg. daily
+        return if (notification.recurringEnabled) {
+            val result = notificationRepository.addNotification(notification)
+            println("ID: $result")
+            setRecurringNotification(notification, result)
+            result
+        } else {
+            val result = notificationRepository.addNotification(notification)
+            println("ID: $result")
+            setOneTimeNotification(notification, result)
+            result
+        }
     }
 
     suspend fun deleteReminder(notification: Notification): Int {
@@ -89,6 +102,37 @@ private fun setOneTimeNotification(reminder: Notification, id: Long) {
         }
 }
 
+// Sets a periodic daily notification for a single reminder
+private fun setRecurringNotification(reminder: Notification, id: Long) {
+    val workManager = WorkManager.getInstance(Graph.appContext)
+    val constraints = Constraints.Builder()
+        .setRequiredNetworkType(NetworkType.CONNECTED)
+        .build()
+
+    val delay: Long = (reminder.reminderTime - reminder.creationTime) / 1000
+
+    println(reminder.reminderTime)
+    println(reminder.creationTime)
+
+    // Repeat notification every day
+    val interval = Duration.ofDays(1)
+
+    val notificationWorker = PeriodicWorkRequestBuilder<ReminderWorker>(interval)
+        .setInitialDelay(delay - 20, TimeUnit.SECONDS)
+        .setConstraints(constraints)
+        .build()
+
+    workManager.enqueue(notificationWorker)
+
+    workManager.getWorkInfoByIdLiveData(notificationWorker.id)
+        .observeForever { workInfo ->
+            if (workInfo.state == WorkInfo.State.SUCCEEDED) {
+                createReminderNotification(reminder, id)
+                updateSeen(reminder)
+            }
+        }
+}
+
 private fun createReminderNotification(reminder: Notification, id: Long) {
 
     val notificationId = id.toInt()
@@ -107,7 +151,7 @@ private fun updateSeen(
     reminder: Notification,
     notificationRepository: NotificationRepository = Graph.notificationRepository
 ) {
-    notificationRepository.update2(
+    notificationRepository.updateSeenState(
         Notification(
             notificationId = reminder.notificationId,
             notificationTitle = reminder.notificationTitle,
@@ -119,7 +163,8 @@ private fun updateSeen(
             creationTime = reminder.creationTime,
             creatorId = reminder.creatorId,
             notificationSeen = true,
-            notificationEnabled = true
+            notificationEnabled = true,
+            recurringEnabled = recurringReminderEnabled
         )
     )
 }

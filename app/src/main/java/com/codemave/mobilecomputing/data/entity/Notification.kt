@@ -23,5 +23,6 @@ data class Notification(
     @ColumnInfo(name = "creationTime") val creationTime: Long,
     @ColumnInfo(name = "creatorId") val creatorId: String,
     @ColumnInfo(name = "seen") val notificationSeen: Boolean,
-    @ColumnInfo(name = "notificationEnabled") val notificationEnabled: Boolean
+    @ColumnInfo(name = "notificationEnabled") val notificationEnabled: Boolean,
+    @ColumnInfo(name = "recurringEnabled") val recurringEnabled: Boolean
 )

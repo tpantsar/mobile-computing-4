@@ -14,13 +14,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.codemave.mobilecomputing.R
 import com.codemave.mobilecomputing.data.entity.Category
 import com.codemave.mobilecomputing.data.entity.Notification
 import kotlinx.coroutines.launch
@@ -60,7 +58,6 @@ private fun ReminderList(
         items(list) { item ->
             ReminderListItem(
                 notification = item,
-                // onClick = {TODO},
                 modifier = Modifier.fillParentMaxWidth(),
                 context,
                 navController,
@@ -89,6 +86,7 @@ private fun ReminderListItem(
 
             val coroutineScope = rememberCoroutineScope()
             val (divider, notificationTitle, notificationTime, notificationDate, editIcon, deleteIcon) = createRefs()
+
             Divider(
                 Modifier.constrainAs(divider) {
                     top.linkTo(parent.top)
@@ -113,6 +111,7 @@ private fun ReminderListItem(
                     width = Dimension.preferredWrapContent
                 }
             )
+
             Text(
                 text = notification.notificationTime,
                 maxLines = 1,
@@ -129,8 +128,14 @@ private fun ReminderListItem(
                     width = Dimension.preferredWrapContent
                 }
             )
+
+            var date = notification.notificationDate
+            if (notification.recurringEnabled) {
+                date = "$date     Daily"
+            }
+
             Text(
-                text = notification.notificationDate,
+                text = date,
                 maxLines = 1,
                 style = MaterialTheme.typography.subtitle1,
                 modifier = Modifier.constrainAs(notificationDate) {

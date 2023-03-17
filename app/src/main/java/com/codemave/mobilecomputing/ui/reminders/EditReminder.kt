@@ -81,7 +81,6 @@ fun EditReminder(
         val notificationTitle = rememberSaveable { mutableStateOf(notification.notificationTitle) }
         val notificationTime = rememberSaveable { mutableStateOf(notification.notificationTime) }
         val notificationDate = rememberSaveable { mutableStateOf(notification.notificationDate) }
-        val notificationEnabled = rememberSaveable { mutableStateOf(notification.notificationEnabled) }
 
         // Set correct time to be displayed
         time.value = notificationTime.value
@@ -106,16 +105,16 @@ fun EditReminder(
                 shape = RoundedCornerShape(corner = CornerSize(50.dp))
             )
 
-            // Switch button state, enabled by default
+            // Switch button state
             var switchOn by remember {
-                mutableStateOf(true)
+                mutableStateOf(notification.notificationEnabled)
             }
 
             Row(
                 modifier = Modifier.fillMaxWidth(0.9f),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                WeeklyReminder()
+                DailyReminder(notification.recurringEnabled)
 
                 Column(
                     verticalArrangement = Arrangement.Center,
@@ -212,7 +211,8 @@ fun EditReminder(
                                     creationTime = notification.creationTime,
                                     creatorId = notification.creatorId,
                                     notificationSeen = notification.notificationSeen,
-                                    notificationEnabled = true
+                                    notificationEnabled = true,
+                                    recurringEnabled = recurringReminderEnabled
                                 )
                             )
                         } else {
@@ -228,7 +228,8 @@ fun EditReminder(
                                     creationTime = notification.creationTime,
                                     creatorId = notification.creatorId,
                                     notificationSeen = notification.notificationSeen,
-                                    notificationEnabled = false
+                                    notificationEnabled = false,
+                                    recurringEnabled = recurringReminderEnabled
                                 )
                             )
                         }
@@ -244,11 +245,11 @@ fun EditReminder(
 }
 
 @Composable
-private fun WeeklyReminder() {
+private fun DailyReminder(isEnabled: Boolean) {
     val contextForToast = LocalContext.current.applicationContext
 
     var recurringReminder by remember {
-        mutableStateOf(false)
+        mutableStateOf(isEnabled)
     }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -267,7 +268,7 @@ private fun WeeklyReminder() {
 
         Text(
             modifier = Modifier.padding(start = 2.dp),
-            text = "Repeat weekly"
+            text = "Repeat daily"
         )
     }
 }
@@ -279,7 +280,7 @@ private fun TopBar(
     TopAppBar(
         title = {
             Text(
-                text = "Edit notification",
+                text = "Edit reminder",
                 color = MaterialTheme.colors.primary,
                 modifier = Modifier
                     .padding(start = 4.dp)
